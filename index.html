@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>剪映助手</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 480px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .header h1 {
+      font-size: 22px;
+      color: #fff;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    .header p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      margin-top: 4px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-title .icon {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .input-row + .input-row {
+      margin-top: 10px;
+    }
+    input[type="text"],
+    input[type="password"] {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1.5px solid #e8e8e8;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fafafa;
+    }
+    input:focus {
+      border-color: #764ba2;
+      box-shadow: 0 0 0 3px rgba(118,75,162,0.1);
+      background: #fff;
+    }
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #555;
+    }
+    .btn-secondary:hover { background: #e4e4e4; }
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 12px;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 12px;
+      min-height: 18px;
+      transition: all 0.3s;
+    }
+    .status.error { color: #e74c3c; }
+    .status.success { color: #27ae60; }
+    .status.info { color: #764ba2; }
+
+    /* 更新横幅 */
+    .update-banner {
+      display: none;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 20px rgba(245,87,108,0.3);
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .update-banner.show { display: flex; }
+    .update-banner .update-info {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .update-banner .btn-restart {
+      background: #fff;
+      color: #f5576c;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .update-banner .btn-restart:hover { background: #fff5f5; }
+    .update-banner .btn-restart:active { transform: scale(0.97); }
+
+    /* 进度条 */
+    .progress-wrap {
+      display: none;
+      margin-top: 8px;
+    }
+    .progress-wrap.show { display: block; }
+    .progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-bar-inner {
+      height: 100%;
+      background: #fff;
+      border-radius: 2px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+    .progress-text {
+      font-size: 11px;
+      color: rgba(255,255,255,0.8);
+      margin-top: 4px;
+    }
+
+    /* 底部 */
+    .footer {
+      text-align: center;
+      margin-top: 6px;
+    }
+    .btn-check-update {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: color 0.2s;
+    }
+    .btn-check-update:hover { color: #fff; }
+    .btn-check-update:disabled { cursor: default; opacity: 0.5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>剪映助手</h1>
+      <p>Jianying Assistant</p>
+    </div>
+
+    <!-- 更新提示横幅 -->
+    <div id="updateBanner" class="update-banner">
+      <div>
+        <div id="updateText" class="update-info">发现新版本</div>
+        <div id="updateProgress" class="progress-wrap">
+          <div class="progress-bar"><div id="updateProgressInner" class="progress-bar-inner"></div></div>
+          <div id="updateProgressText" class="progress-text"></div>
+        </div>
+      </div>
+      <button id="updateBtn" class="btn-restart" style="display:none">重启更新</button>
+    </div>
+
+    <!-- 草稿路径 -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📂</span> 剪映草稿路径</div>
+      <div class="input-row">
+        <input type="text" id="draftPathInput" placeholder="请选择或输入草稿路径">
+        <button class="btn btn-secondary btn-sm" id="selectDirBtn">选择</button>
+      </div>
+      <div id="pathStatus" class="status"></div>
+    </div>
+
+    <!-- 导出 -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📦</span> 导出草稿</div>
+      <div class="input-row">
+        <input type="text" id="draftIdInput" placeholder="草稿ID" value="vd_2061587560192122880">
+      </div>
+      <div class="input-row">
+        <input type="password" id="apiKeyInput" placeholder="API Key" value="cpk_LaAVvYVtdGE25D5PZPlwes7TjEs0neu6">
+        <button id="exportBtn" class="btn btn-primary btn-sm">导出</button>
+      </div>
+      <div id="exportStatus" class="status"></div>
+    </div>
+
+    <div class="footer">
+      <button class="btn-check-update" id="checkUpdateBtn">检查更新</button>
+    </div>
+  </div>
+
+  <script>
+    const electronAPI = window.electronAPI;
+    let saveTimer = null;
+
+    // --- 事件绑定 ---
+    document.getElementById('selectDirBtn').addEventListener('click', selectDirectory);
+    document.getElementById('exportBtn').addEventListener('click', handleExport);
+    document.getElementById('checkUpdateBtn').addEventListener('click', checkUpdate);
+    document.getElementById('updateBtn').addEventListener('click', handleUpdateAction);
+    document.getElementById('draftPathInput').addEventListener('input', autoSaveDraftPath);
+
+    // --- 草稿路径 ---
+    async function loadDraftPath() {
+      if (!electronAPI) return;
+      const p = await electronAPI.getDraftPath();
+      if (p) document.getElementById('draftPathInput').value = p;
+    }
+
+    async function selectDirectory() {
+      if (!electronAPI) return;
+      const dir = await electronAPI.selectDirectory();
+      if (dir) {
+        document.getElementById('draftPathInput').value = dir;
+        saveDraftPath();
+      }
+    }
+
+    function autoSaveDraftPath() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => saveDraftPath(), 500);
+    }
+
+    async function saveDraftPath() {
+      if (!electronAPI) return;
+      const p = document.getElementById('draftPathInput').value.trim();
+      const el = document.getElementById('pathStatus');
+      if (!p) { el.textContent = '路径不能为空'; el.className = 'status error'; return; }
+      await electronAPI.setDraftPath(p);
+      el.textContent = '已保存'; el.className = 'status success';
+      setTimeout(() => { el.textContent = ''; }, 2000);
+    }
+
+    // --- 导出 ---
+    async function handleExport() {
+      if (!electronAPI) return;
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
+      const draftId = document.getElementById('draftIdInput').value.trim();
+      const el = document.getElementById('exportStatus');
+      const btn = document.getElementById('exportBtn');
+
+      if (!draftId) { el.textContent = '请输入草稿ID'; el.className = 'status error'; return; }
+      if (!apiKey) { el.textContent = '请输入 API Key'; el.className = 'status error'; return; }
+
+      btn.disabled = true;
+      el.textContent = '正在请求并解压...'; el.className = 'status info';
+
+      const result = await electronAPI.downloadAndExtract(apiKey, draftId);
+
+      if (result.success) {
+        el.textContent = '导出成功！'; el.className = 'status success';
+      } else {
+        el.textContent = result.error; el.className = 'status error';
+      }
+      btn.disabled = false;
+    }
+
+    // --- 更新 ---
+    let updateState = null;
+
+    function checkUpdate() {
+      if (!electronAPI) return;
+      const btn = document.getElementById('checkUpdateBtn');
+      btn.textContent = '正在检查...';
+      btn.disabled = true;
+      electronAPI.checkUpdate();
+    }
+
+    if (electronAPI) {
+      electronAPI.onUpdateStatus((data) => {
+        const banner = document.getElementById('updateBanner');
+        const text = document.getElementById('updateText');
+        const btn = document.getElementById('updateBtn');
+        const checkBtn = document.getElementById('checkUpdateBtn');
+        const progressWrap = document.getElementById('updateProgress');
+        const progressInner = document.getElementById('updateProgressInner');
+        const progressText = document.getElementById('updateProgressText');
+
+        switch (data.type) {
+          case 'available':
+            updateState = 'downloading';
+            text.textContent = `发现新版本 v${data.version}，正在下载...`;
+            btn.style.display = 'none';
+            progressWrap.classList.add('show');
+            progressInner.style.width = '0%';
+            progressText.textContent = '';
+            banner.classList.add('show');
+            checkBtn.textContent = '检查更新';
+            checkBtn.disabled = false;
+            break;
+          case 'not-available':
+            updateState = null;
+            banner.classList.remove('show');
+            checkBtn.textContent = '已是最新版本';
+            checkBtn.disabled = false;
+            setTimeout(() => { checkBtn.textContent = '检查更新'; }, 3000);
+            break;
+          case 'downloading':
+            updateState = 'downloading';
+            const pct = data.percent.toFixed(1);
+            text.textContent = '正在下载更新...';
+            progressWrap.classList.add('show');
+            progressInner.style.width = pct + '%';
+            progressText.textContent = pct + '%';
+            banner.classList.add('show');
+            checkBtn.textContent = '下载中...';
+            checkBtn.disabled = true;
+            break;
+          case 'downloaded':
+            updateState = 'downloaded';
+            text.textContent = '新版本已就绪';
+            progressWrap.classList.remove('show');
+            btn.style.display = '';
+            btn.textContent = '重启更新';
+            banner.classList.add('show');
+            checkBtn.textContent = '检查更新';
+            checkBtn.disabled = false;
+            break;
+          case 'error':
+            updateState = null;
+            text.textContent = '更新失败: ' + data.message;
+            progressWrap.classList.remove('show');
+            btn.style.display = 'none';
+            banner.classList.add('show');
+            checkBtn.textContent = '检查更新';
+            checkBtn.disabled = false;
+            setTimeout(() => { banner.classList.remove('show'); }, 5000);
+            break;
+        }
+      });
+    }
+
+    function handleUpdateAction() {
+      if (!electronAPI) return;
+      if (updateState === 'downloaded') {
+        electronAPI.installUpdate();
+      }
+    }
+
+    // 初始化
+    loadDraftPath();
+  </script>
+</body>
+</html>
