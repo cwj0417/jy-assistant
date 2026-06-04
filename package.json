@@ -22,7 +22,7 @@
   },
   "build": {
     "appId": "com.jy-assistant.app",
-    "productName": "剪映助手",
+    "productName": "JY Assistant",
     "directories": {
       "output": "dist"
     },
