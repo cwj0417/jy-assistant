@@ -169,15 +169,25 @@ ipcMain.handle('download-and-extract', async (_, { apiKey, draftId }) => {
   try {
     const apiUrl = `http://49.235.60.245:8080/plugin/v1/tools/video/draft/${draftId}/step/jianying-pack`;
     const body = JSON.stringify({
-      apiKey,
       draftFoldPath: draftPath,
     });
 
     console.log('[export] 请求URL:', apiUrl);
     console.log('[export] 请求Body:', body);
 
-    const zipBuffer = await postJson(apiUrl, body, apiKey);
-    console.log('[export] 响应大小:', zipBuffer.length, 'bytes');
+    const respBuffer = await postJson(apiUrl, body, apiKey);
+    const respText = respBuffer.toString('utf8');
+    console.log('[export] 响应内容:', respText);
+
+    const resp = JSON.parse(respText);
+    const packUrl = resp.packUrl || resp.data?.packUrl;
+    if (!packUrl) {
+      return { success: false, error: '响应中未找到 packUrl' };
+    }
+
+    console.log('[export] packUrl:', packUrl);
+    const zipBuffer = await downloadFile(packUrl);
+    console.log('[export] zip大小:', zipBuffer.length, 'bytes');
 
     const zip = new AdmZip(zipBuffer);
     console.log('[export] zip条目数:', zip.getEntries().length);
@@ -207,6 +217,26 @@ ipcMain.handle('check-update', () => {
   checkForUpdates();
 });
 
+// GET下载文件并返回buffer
+function downloadFile(url) {
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith('https') ? https : http;
+    client.get(url, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return downloadFile(res.headers.location).then(resolve).catch(reject);
+      }
+      if (res.statusCode !== 200) {
+        reject(new Error(`下载失败，状态码: ${res.statusCode}`));
+        return;
+      }
+      const chunks = [];
+      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
 // POST JSON请求并返回响应buffer
 function postJson(url, body, apiKey) {
   return new Promise((resolve, reject) => {
@@ -223,6 +253,8 @@ function postJson(url, body, apiKey) {
       },
     };
     console.log('[http] POST', urlObj.hostname + ':' + urlObj.port + urlObj.pathname);
+    console.log('[http] Authorization:', apiKey);
+    console.log('[http] Body:', body);
     const client = urlObj.protocol === 'https:' ? https : http;
     const req = client.request(options, (res) => {
       console.log('[http] 响应状态码:', res.statusCode);
