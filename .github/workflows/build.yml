@@ -34,6 +34,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
+      - name: Ad-hoc code sign (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          APP_PATH=$(find dist/mac -name "*.app" -maxdepth 2 | head -1)
+          if [ -n "$APP_PATH" ]; then
+            echo "Signing: $APP_PATH"
+            codesign --force --deep --sign - --options runtime --entitlements entitlements.plist "$APP_PATH"
+            codesign --verify --verbose "$APP_PATH"
+            echo "Ad-hoc signing completed successfully"
+          else
+            echo "No .app found in dist/mac"
+          fi
+
       - name: Build Electron app (Windows)
         if: matrix.os == 'windows-latest'
         run: npm run build:win
