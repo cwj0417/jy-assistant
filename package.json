@@ -50,7 +50,7 @@
           ]
         }
       ],
-      "identity": null,
+      "identity": "-",
       "hardenedRuntime": true,
       "entitlements": "entitlements.plist",
       "entitlementsInherit": "entitlements.plist"
