@@ -27,10 +27,28 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install certificate (macOS)
+        if: matrix.os == 'macos-latest'
+        env:
+          MAC_CERTIFICATE: ${{ secrets.CSC_LINK }}
+          MAC_CERTIFICATE_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          if [ -n "$MAC_CERTIFICATE" ]; then
+            echo $MAC_CERTIFICATE | base64 --decode > certificate.p12
+            security create-keychain -p "$MAC_CERTIFICATE_PASSWORD" build.keychain
+            security default-keychain -s build.keychain
+            security unlock-keychain -p "$MAC_CERTIFICATE_PASSWORD" build.keychain
+            security import certificate.p12 -k build.keychain -P "$MAC_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+            security set-key-partition-list -S apple-tool:,apple: -s -k "$MAC_CERTIFICATE_PASSWORD" build.keychain
+            security list-keychains -s build.keychain
+          fi
+
       - name: Build Electron app (macOS)
         if: matrix.os == 'macos-latest'
         run: npm run build:mac
         env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Electron app (Windows)
