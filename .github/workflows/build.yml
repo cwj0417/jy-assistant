@@ -27,21 +27,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Setup keychain and import self-signed cert (macOS)
+      - name: Setup clean keychain (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          # Create a clean keychain
+          # Create a clean keychain without expired certs
           security create-keychain -p actions build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p actions build.keychain
           security list-keychains -s build.keychain
-          # Generate self-signed certificate
-          openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=JY Assistant"
-          openssl pkcs12 -export -out cert.p12 -inkey key.pem -in cert.pem -passout pass:actions
-          # Import into keychain for codesign
-          security import cert.p12 -k build.keychain -P actions -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
-          # Verify identity is available
+          # Verify no expired identities
           echo "Available signing identities:"
           security find-identity -v build.keychain
 
