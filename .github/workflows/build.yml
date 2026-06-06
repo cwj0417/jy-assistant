@@ -40,6 +40,8 @@ jobs:
           openssl pkcs12 -export -out cert.p12 -inkey key.pem -in cert.pem -passout pass:actions
           security import cert.p12 -k build.keychain -P actions -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
+          # Add cert to trusted list so electron-builder accepts it
+          sudo security add-trusted-cert -d -r trustRoot -k build.keychain cert.pem
           # Verify identity is available
           echo "Available signing identities:"
           security find-identity -v build.keychain
